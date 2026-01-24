@@ -16,6 +16,7 @@ import {
   getWindow,
   isHTMLElement,
   isDocument,
+  isSafari,
   isShadowRoot,
   isKeyboardEvent,
   parseTranslate,
@@ -301,12 +302,22 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
       const dX = (width - placeholderShape.width) * origin.x + delta.x;
       const dY = (height - placeholderShape.height) * origin.y + delta.y;
 
+      const vv = window.visualViewport!;
+      const offset = { left: 0, top: 0 }
+      if (isSafari() && vv) {
+        // in Safari, Element.getBoundingClientRect() returns position relative
+        // to visual viewport, whereas Chrome returns relative to layout viewport
+        // but position: fixed excepts position relative
+        offset.left = vv.offsetLeft ?? 0
+        offset.top = vv.offsetTop ?? 0
+      }
+
       styles.set(
         {
           width: placeholderShape.width - widthOffset,
           height: placeholderShape.height - heightOffset,
-          top: top + dY,
-          left: left + dX,
+          top: offset.top + (top + dY),
+          left: offset.left + (left + dX),
         },
         CSS_PREFIX
       );
